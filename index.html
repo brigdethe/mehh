@@ -36,8 +36,9 @@
 		<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&subset=latin,cyrillic" rel="stylesheet" />
 		<link rel="stylesheet" href="https://static.tildacdn.com/css/tilda-animation-2.0.min.css" type="text/css" media="all" onerror="this.loaderr='y';" />
 		<link rel="stylesheet" href="https://static.tildacdn.com/css/highlight.min.css" type="text/css" media="all" onerror="this.loaderr='y';" />
-		<link rel="stylesheet" href="https://static.tildacdn.com/css/tilda-popup-1.1.min.css" type="text/css" media="print" onload="this.media='all';" onerror="this.loaderr='y';" />
-		<noscript><link rel="stylesheet" href="https://static.tildacdn.com/css/tilda-popup-1.1.min.css" type="text/css" media="all" /></noscript>
+		<!-- Tilda popup CSS disabled -->
+		<!-- <link rel="stylesheet" href="https://static.tildacdn.com/css/tilda-popup-1.1.min.css" type="text/css" media="print" onload="this.media='all';" onerror="this.loaderr='y';" /> -->
+		<!-- <noscript><link rel="stylesheet" href="https://static.tildacdn.com/css/tilda-popup-1.1.min.css" type="text/css" media="all" /></noscript> -->
 		<link rel="stylesheet" href="https://static.tildacdn.com/css/tilda-forms-1.0.min.css" type="text/css" media="all" onerror="this.loaderr='y';" />
 		<script nomodule src="https://static.tildacdn.com/js/tilda-polyfill-1.0.min.js" charset="utf-8"></script>
 		<script type="text/javascript">function t_onReady(func) {
@@ -63,7 +64,8 @@ t_onFuncLoad(funcName, okFunc, time);
 		<script src="https://static.tildacdn.com/js/tilda-animation-2.0.min.js" charset="utf-8" async onerror="this.loaderr='y';"></script>
 		<script src="https://static.tildacdn.com/js/highlight.min.js" charset="utf-8" onerror="this.loaderr='y';"></script>
 		<script src="https://static.tildacdn.com/js/tilda-zero-1.1.min.js" charset="utf-8" async onerror="this.loaderr='y';"></script>
-		<script src="https://static.tildacdn.com/js/tilda-popup-1.0.min.js" charset="utf-8" async onerror="this.loaderr='y';"></script>
+		<!-- Tilda popup script disabled -->
+		<!-- <script src="https://static.tildacdn.com/js/tilda-popup-1.0.min.js" charset="utf-8" async onerror="this.loaderr='y';"></script> -->
 		<script src="https://static.tildacdn.com/js/tilda-forms-1.0.min.js" charset="utf-8" async onerror="this.loaderr='y';"></script>
 		<script src="https://static.tildacdn.com/js/tilda-zero-forms-1.0.min.js" charset="utf-8" async onerror="this.loaderr='y';"></script>
 		<script src="https://static.tildacdn.com/js/tilda-animation-sbs-1.0.min.js" charset="utf-8" async onerror="this.loaderr='y';"></script>
@@ -74,6 +76,122 @@ t_onFuncLoad(funcName, okFunc, time);
 		<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 		<!-- Custom EmailJS Handler -->
 		<script type="text/javascript" src="js/emailjs-handler.js"></script>
+		<!-- External Form/Link Blocker -->
+		<script type="text/javascript">
+		// Block all external forms and links except scripts
+		document.addEventListener('DOMContentLoaded', function() {
+			// Block external form submissions
+			document.addEventListener('submit', function(e) {
+				const form = e.target;
+				const action = form.action;
+				
+				// Allow forms without action (same page) or with empty action
+				if (action && action !== '' && action !== window.location.href) {
+					// Check if it's an external URL
+					try {
+						const url = new URL(action, window.location.href);
+						if (url.origin !== window.location.origin) {
+							e.preventDefault();
+							console.log('Blocked external form submission to:', action);
+							alert('External form submissions are disabled for security reasons.');
+							return false;
+						}
+					} catch (err) {
+						// If URL parsing fails, block it
+						e.preventDefault();
+						console.log('Blocked form submission with invalid action:', action);
+						alert('External form submissions are disabled for security reasons.');
+						return false;
+					}
+				}
+			});
+			
+			// Block external link clicks
+			document.addEventListener('click', function(e) {
+				const link = e.target.closest('a');
+				if (link && link.href) {
+					try {
+						const url = new URL(link.href, window.location.href);
+						// Allow internal links and anchor links
+						if (url.origin !== window.location.origin && !link.href.startsWith('#')) {
+							e.preventDefault();
+							console.log('Blocked external link click to:', link.href);
+							alert('External links are disabled for security reasons.');
+							return false;
+						}
+					} catch (err) {
+						// If URL parsing fails, block it
+						e.preventDefault();
+						console.log('Blocked link click with invalid href:', link.href);
+						alert('External links are disabled for security reasons.');
+						return false;
+					}
+				}
+			});
+			
+			// Block iframe loading of external content
+			document.addEventListener('DOMNodeInserted', function(e) {
+				if (e.target.tagName === 'IFRAME') {
+					const iframe = e.target;
+					if (iframe.src) {
+						try {
+							const url = new URL(iframe.src, window.location.href);
+							if (url.origin !== window.location.origin) {
+								iframe.remove();
+								console.log('Blocked external iframe:', iframe.src);
+							}
+						} catch (err) {
+							iframe.remove();
+							console.log('Blocked iframe with invalid src:', iframe.src);
+						}
+					}
+				}
+			});
+			
+			// Block dynamic script loading of external content (except allowed domains)
+			const allowedScriptDomains = [
+				'static.tildacdn.com',
+				'neo.tildacdn.com',
+				'cdn.jsdelivr.net',
+				'matilda-design.ru',
+				'cdnjs.cloudflare.com',
+				'mc.yandex.ru',
+				'connect.facebook.net'
+			];
+			
+			const originalCreateElement = document.createElement;
+			document.createElement = function(tagName) {
+				const element = originalCreateElement.call(this, tagName);
+				
+				if (tagName.toLowerCase() === 'script') {
+					const originalSetAttribute = element.setAttribute;
+					element.setAttribute = function(name, value) {
+						if (name === 'src' && value) {
+							try {
+								const url = new URL(value, window.location.href);
+								const isAllowed = allowedScriptDomains.some(domain => 
+									url.hostname === domain || url.hostname.endsWith('.' + domain)
+								);
+								
+								if (!isAllowed && url.origin !== window.location.origin) {
+									console.log('Blocked external script:', value);
+									return; // Don't set the src attribute
+								}
+							} catch (err) {
+								console.log('Blocked script with invalid src:', value);
+								return; // Don't set the src attribute
+							}
+						}
+						return originalSetAttribute.call(this, name, value);
+					};
+				}
+				
+				return element;
+			};
+			
+			console.log('External form and link blocking activated');
+		});
+		</script>
 		<!-- https://romanyu.ru/bolshoy-beydzhik -->
 		<meta name="twitter:card" content="summary_large_image" />
 		<!-- Meta Pixel Code -->
@@ -564,7 +682,7 @@ t396_init('741913787');
 							<div class="tn-atom" field="tn_text_1701768525187">We connect skilled riders to a trusted system—bringing safe, affordable transport to the communities that need it most.</div>
 						</div>
 						<div class="t396__elem tn-elem tn-elem__7419137891701768589628" data-elem-id="1701768589628" data-elem-type="text" data-field-top-value="1056" data-field-left-value="218" data-field-width-value="243" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="523" data-field-left-res-340-value="95" data-field-top-res-744-value="476" data-field-left-res-744-value="139" data-field-width-res-744-value="145" data-field-top-res-1200-value="656" data-field-left-res-1200-value="145" data-field-width-res-1200-value="136">
-							<div class="tn-atom" field="tn_text_1701768589628">In rural Ghana, unregulated motorbike taxis make transport unsafe, costly, and unreliable.</div>
+							<div class="tn-atom" field="tn_text_1701768589628">In rural Ghana, unregulated motorbike taxis make transport unsafe and unreliable.</div>
 						</div>
 						<div class="t396__elem tn-elem tn-elem__7419137891701783244433" data-elem-id="1701783244433" data-elem-type="text" data-field-top-value="1056" data-field-left-value="581" data-field-width-value="344" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="674" data-field-left-res-340-value="66" data-field-top-res-744-value="476" data-field-left-res-744-value="428" data-field-width-res-744-value="209" data-field-top-res-1200-value="656" data-field-left-res-1200-value="396" data-field-width-res-1200-value="150">
 							<div class="tn-atom" field="tn_text_1701783244433">
@@ -1717,238 +1835,12 @@ t396_init('746932350');
 					</div>
 				</div>
 			</div>
-			<div id="rec746933625" class="r t-rec" style=" " data-animationappear="off" data-record-type="1093">
-				<!-- t1093 -->
-				<div class="t1093">
-					<div class="t-popup " data-anim="fadein" data-anim-timeout="0.3" data-tooltip-hook="#question" data-popup-rec-ids="746933638" role="dialog" aria-modal="true" tabindex="-1">
-						<div class="t-popup__container t-width t-valign_middle"></div>
-					</div>
-					<div class="t-popup__bg"></div>
-				</div>
-				<style>#rec746933638[data-record-type="396"] {
-display: none;
-}
-.t1093 .t-popup #rec746933638[data-record-type="396"] {
-display: block;
-}</style>
-				<style>#rec746933625 .t1093 .t-popup__bg {
-background-color: rgba(54,54,54,0.80); -webkit-backdrop-filter: blur(4px);
-backdrop-filter: blur(4px);
-}</style>
-				<style>#rec746933625 .t1093 .t-popup.t-popup-anim-fadein .t-popup__container {
-transition-timing-function: ease-in-out;
-}</style>
-				<script>t_onReady(function () {
-t_onFuncLoad('t1093__init', function () {
-t1093__init('746933625');
-});
-t_onFuncLoad('t1093__initPopup', function () {
-t1093__initPopup('746933625');
-});
-});</script>
-			</div>
-			<div id="rec746933638" class="r t-rec" style=" " data-animationappear="off" data-record-type="396">
-				<style></style>
-				<div class="t396">
-					<div class="t396__artboard" data-artboard-recid="746933638" data-artboard-screens="340,744,1200,1920" data-artboard-height="800" data-artboard-valign="center" data-artboard-upscale="grid" data-artboard-height-res-340="497" data-artboard-height-res-744="510" data-artboard-height-res-1200="800">
-						<div class="t396__carrier" data-artboard-recid="746933638"></div>
-						<div class="t396__filter" data-artboard-recid="746933638"></div>
-						<div class="t396__elem tn-elem tn-elem__7469336381701698158284" data-elem-id="1701698158284" data-elem-type="shape" data-field-top-value="0" data-field-left-value="555" data-field-height-value="800" data-field-width-value="810" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value="px" data-field-widthunits-value="px" data-field-lazyoff-value="y" data-field-top-res-340-value="0" data-field-left-res-340-value="5" data-field-height-res-340-value="497" data-field-width-res-340-value="330" data-field-top-res-744-value="0" data-field-left-res-744-value="122" data-field-height-res-744-value="510" data-field-width-res-744-value="500" data-field-top-res-1200-value="0" data-field-left-res-1200-value="195" data-field-height-res-1200-value="800" data-field-width-res-1200-value="810">
-							<div class="tn-atom"></div>
-						</div>
-						<div class="t396__elem tn-elem footerlink tn-elem__7469336381701698961042" data-elem-id="1701698961042" data-elem-type="text" data-field-top-value="178" data-field-left-value="734" data-field-width-value="453" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="112" data-field-left-res-340-value="49" data-field-width-res-340-value="243" data-field-top-res-744-value="122" data-field-left-res-744-value="222" data-field-width-res-744-value="301" data-field-top-res-1200-value="178" data-field-left-res-1200-value="378">
-							<div class="tn-atom">
-								<a href="/" style="color: inherit">We will contact you to choose a time that is convenient for you. Meet online for 20 minutes to answer basic questions.</a>
-							</div>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7469336381701698961047" data-elem-id="1701698961047" data-elem-type="text" data-field-top-value="665" data-field-left-value="852" data-field-width-value="216" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="437" data-field-left-res-340-value="78" data-field-top-res-744-value="435" data-field-left-res-744-value="280" data-field-width-res-744-value="185" data-field-top-res-1200-value="625" data-field-left-res-1200-value="492">
-							<div class="tn-atom">
-								<a href="/" style="color: inherit">By submitting data, you agree to the</a>
-								<a href="/policy" target="_blank" rel="noreferrer noopener" style="color: rgb(51, 102, 255); border-bottom: 1px solid rgb(51, 102, 255); box-shadow: none; text-decoration: none;">Data Processing Policy</a>
-							</div>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7469336381701699068772" data-elem-id="1701699068772" data-elem-type="text" data-field-top-value="90" data-field-left-value="746" data-field-width-value="429" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="60" data-field-left-res-340-value="58" data-field-width-res-340-value="224" data-field-top-res-744-value="60" data-field-left-res-744-value="220" data-field-width-res-744-value="305" data-field-top-res-1200-value="90" data-field-left-res-1200-value="393" data-field-width-res-1200-value="414">
-							<div class="tn-atom" field="tn_text_1701699068772">Submit a request for a free consultation</div>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7469336381701758924285" data-elem-id="1701758924285" data-elem-type="form" data-field-top-value="310" data-field-left-value="693" data-field-width-value="534" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="216" data-field-left-res-340-value="30" data-field-width-res-340-value="280" data-field-top-res-744-value="206" data-field-left-res-744-value="205" data-field-width-res-744-value="334" data-field-top-res-1200-value="310" data-field-left-res-1200-value="333" data-field-inputpos-value="v" data-field-inputfontfamily-value="Manrope" data-field-fieldfontfamily-value="Manrope" data-field-inputfontsize-value="16" data-field-inputfontweight-value="400" data-field-inputcolor-value="#505050" data-field-inputbgcolor-value="#ffffff" data-field-inputbordercolor-value="#363636" data-field-inputbordersize-value="1" data-field-inputheight-value="45" data-field-inputmargbottom-value="45" data-field-inputmargright-value="20" data-field-inputtitlefontsize-value="16" data-field-inputtitlefontweight-value="400" data-field-inputtitlecolor-value="#999999" data-field-inputtitlemargbottom-value="5" data-field-inputelsfontweight-value="400" data-field-inputelsfontsize-value="20" data-field-inputsstyle-value="y" data-field-buttontitle-value="Send request" data-field-buttonalign-value="center" data-field-buttoncolor-value="#3366ff" data-field-buttonbgcolor-value="#ffffff" data-field-buttonradius-value="12" data-field-buttonmargtop-value="50" data-field-buttonwidth-value="534" data-field-buttonheight-value="54" data-field-buttonfontfamily-value="Manrope" data-field-buttonfontsize-value="16" data-field-buttonfontweight-value="600" data-field-formname-value="consultation" data-field-formerrreq-value="Это поле необходимо заполнить!" data-field-formerremail-value="Проверьте правильность заполнения поля!" data-field-formerrphone-value="Проверьте правильность заполнения поля!" data-field-formerrname-value="Проверьте правильность заполнения поля!" data-field-receivers-value="0b1d0ce3a978910e0ec16987b7097069" data-field-buttonmargtop-res-340-value="20" data-field-buttonwidth-res-340-value="280" data-field-inputheight-res-744-value="30" data-field-inputmargbottom-res-744-value="30" data-field-inputtitlefontsize-res-744-value="12" data-field-inputtitlemargbottom-res-744-value="0" data-field-buttonmargtop-res-744-value="24" data-field-buttonwidth-res-744-value="334" data-field-buttonheight-res-744-value="40" data-field-buttonfontsize-res-744-value="12" data-field-inputfontsize-res-1200-value="12" data-field-inputheight-res-1200-value="35" data-field-inputmargbottom-res-1200-value="40" data-field-inputtitlemargbottom-res-1200-value="0" data-field-buttonshadowsize-res-1200-value="15" data-field-buttonshadowopacity-res-1200-value="5">
-							<div class="tn-atom tn-atom__form"></div>
-							<!--googleoff: all-->
-							<!--noindex-->
-							<div data-nosnippet="true" class="tn-atom__inputs-wrapp" style="display:none;">
-								<textarea class="tn-atom__inputs-textarea">[{"lid":"1701758924285","ls":"10","loff":"","li_type":"nm","li_ph":"What is your name?","li_req":"y","li_nm":"Name"},{"lid":"1701758924286","ls":"20","loff":"","li_type":"ph","li_ph":"Your phone number","li_req":"y","li_maskcountry":"RU","li_nm":"Phone"},{"lid":"1701759456178","ls":"30","loff":"","li_type":"in","li_ph":"Post your comments here","li_nm":"Input"}]</textarea>
-							</div>
-							<!--/noindex-->
-							<!--googleon: all-->
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7469336381701759711413" data-elem-id="1701759711413" data-elem-type="shape" data-field-top-value="40" data-field-left-value="1298" data-field-height-value="27" data-field-width-value="27" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value="px" data-field-widthunits-value="px" data-field-lazyoff-value="y" data-field-top-res-340-value="20" data-field-left-res-340-value="288" data-field-top-res-744-value="30" data-field-left-res-744-value="565" data-field-top-res-1200-value="40" data-field-left-res-1200-value="938">
-							<a class="tn-atom" href="#closepopup" style="background-image:url('https://static.tildacdn.com/tild3833-6666-4362-b035-633535643637/photo.svg');"></a>
-						</div>
-					</div>
-				</div>
-				<script>t_onReady(function () {
-t_onFuncLoad('t396_init', function () {
-t396_init('746933638');
-});
-});</script>
-				<!-- /T396 -->
-			</div>
-			<div id="rec746935235" class="r t-rec" style=" " data-animationappear="off" data-record-type="1093">
-				<!-- t1093 -->
-				<div class="t1093">
-					<div class="t-popup " data-anim="fadein" data-anim-timeout="0.3" data-tooltip-hook="#standart" data-popup-rec-ids="746935342" role="dialog" aria-modal="true" tabindex="-1">
-						<div class="t-popup__container t-width t-valign_middle"></div>
-					</div>
-					<div class="t-popup__bg"></div>
-				</div>
-				<style>#rec746935342[data-record-type="396"] {
-display: none;
-}
-.t1093 .t-popup #rec746935342[data-record-type="396"] {
-display: block;
-}</style>
-				<style>#rec746935235 .t1093 .t-popup__bg {
-background-color: rgba(54,54,54,0.80); -webkit-backdrop-filter: blur(4px);
-backdrop-filter: blur(4px);
-}</style>
-				<style>#rec746935235 .t1093 .t-popup.t-popup-anim-fadein .t-popup__container {
-transition-timing-function: ease-in-out;
-}</style>
-				<script>t_onReady(function () {
-t_onFuncLoad('t1093__init', function () {
-t1093__init('746935235');
-});
-t_onFuncLoad('t1093__initPopup', function () {
-t1093__initPopup('746935235');
-});
-});</script>
-			</div>
-			<div id="rec746935342" class="r t-rec" style=" " data-animationappear="off" data-record-type="396">
-				<!-- T396 -->
-				<style></style>
-				<div class="t396">
-					<div class="t396__artboard" data-artboard-recid="746935342" data-artboard-screens="340,744,1200,1920" data-artboard-height="800" data-artboard-valign="center" data-artboard-upscale="grid" data-artboard-height-res-340="497" data-artboard-height-res-744="510" data-artboard-height-res-1200="800">
-						<div class="t396__carrier" data-artboard-recid="746935342"></div>
-						<div class="t396__filter" data-artboard-recid="746935342"></div>
-						<div class="t396__elem tn-elem tn-elem__7469353421701698158284" data-elem-id="1701698158284" data-elem-type="shape" data-field-top-value="0" data-field-left-value="555" data-field-height-value="800" data-field-width-value="810" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value="px" data-field-widthunits-value="px" data-field-lazyoff-value="y" data-field-top-res-340-value="0" data-field-left-res-340-value="5" data-field-height-res-340-value="497" data-field-width-res-340-value="330" data-field-top-res-744-value="0" data-field-left-res-744-value="122" data-field-height-res-744-value="510" data-field-width-res-744-value="500" data-field-top-res-1200-value="0" data-field-left-res-1200-value="195" data-field-height-res-1200-value="800" data-field-width-res-1200-value="810">
-							<div class="tn-atom"></div>
-						</div>
-						<div class="t396__elem tn-elem footerlink tn-elem__7469353421701698961042" data-elem-id="1701698961042" data-elem-type="text" data-field-top-value="178" data-field-left-value="734" data-field-width-value="453" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="112" data-field-left-res-340-value="49" data-field-width-res-340-value="243" data-field-top-res-744-value="122" data-field-left-res-744-value="222" data-field-width-res-744-value="301" data-field-top-res-1200-value="178" data-field-left-res-1200-value="378">
-							<div class="tn-atom">
-								<a href="/" style="color: inherit">We will contact you to choose a time that is convenient for you. Meet online for 20 minutes to answer basic questions.</a>
-							</div>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7469353421701698961047" data-elem-id="1701698961047" data-elem-type="text" data-field-top-value="665" data-field-left-value="852" data-field-width-value="216" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="437" data-field-left-res-340-value="78" data-field-top-res-744-value="435" data-field-left-res-744-value="280" data-field-width-res-744-value="185" data-field-top-res-1200-value="625" data-field-left-res-1200-value="492">
-							<div class="tn-atom">
-								<a href="/" style="color: inherit">By submitting data, you agree to the</a>
-								<a href="/policy" target="_blank" rel="noreferrer noopener" style="color: rgb(51, 102, 255); border-bottom: 1px solid rgb(51, 102, 255); box-shadow: none; text-decoration: none;">Data Processing Policy</a>
-							</div>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7469353421701699068772" data-elem-id="1701699068772" data-elem-type="text" data-field-top-value="90" data-field-left-value="746" data-field-width-value="429" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="60" data-field-left-res-340-value="58" data-field-width-res-340-value="224" data-field-top-res-744-value="60" data-field-left-res-744-value="220" data-field-width-res-744-value="305" data-field-top-res-1200-value="90" data-field-left-res-1200-value="393" data-field-width-res-1200-value="414">
-							<div class="tn-atom" field="tn_text_1701699068772">Submit a request for a free consultation</div>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7469353421701758924285" data-elem-id="1701758924285" data-elem-type="form" data-field-top-value="310" data-field-left-value="693" data-field-width-value="534" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="216" data-field-left-res-340-value="30" data-field-width-res-340-value="280" data-field-top-res-744-value="206" data-field-left-res-744-value="205" data-field-width-res-744-value="334" data-field-top-res-1200-value="310" data-field-left-res-1200-value="333" data-field-inputpos-value="v" data-field-inputfontfamily-value="Manrope" data-field-fieldfontfamily-value="Manrope" data-field-inputfontsize-value="16" data-field-inputfontweight-value="400" data-field-inputcolor-value="#505050" data-field-inputbgcolor-value="#ffffff" data-field-inputbordercolor-value="#363636" data-field-inputbordersize-value="1" data-field-inputheight-value="45" data-field-inputmargbottom-value="45" data-field-inputmargright-value="20" data-field-inputtitlefontsize-value="16" data-field-inputtitlefontweight-value="400" data-field-inputtitlecolor-value="#999999" data-field-inputtitlemargbottom-value="5" data-field-inputelsfontweight-value="400" data-field-inputelsfontsize-value="20" data-field-inputsstyle-value="y" data-field-buttontitle-value="Send request" data-field-buttonalign-value="center" data-field-buttoncolor-value="#3366ff" data-field-buttonbgcolor-value="#ffffff" data-field-buttonradius-value="12" data-field-buttonmargtop-value="50" data-field-buttonwidth-value="534" data-field-buttonheight-value="54" data-field-buttonfontfamily-value="Manrope" data-field-buttonfontsize-value="16" data-field-buttonfontweight-value="600" data-field-formname-value="consultation" data-field-formerrreq-value="Это поле необходимо заполнить!" data-field-formerremail-value="Проверьте правильность заполнения поля!" data-field-formerrphone-value="Проверьте правильность заполнения поля!" data-field-formerrname-value="Проверьте правильность заполнения поля!" data-field-receivers-value="0b1d0ce3a978910e0ec16987b7097069" data-field-buttonmargtop-res-340-value="20" data-field-buttonwidth-res-340-value="280" data-field-inputheight-res-744-value="30" data-field-inputmargbottom-res-744-value="30" data-field-inputtitlefontsize-res-744-value="12" data-field-inputtitlemargbottom-res-744-value="0" data-field-buttonmargtop-res-744-value="24" data-field-buttonwidth-res-744-value="334" data-field-buttonheight-res-744-value="40" data-field-buttonfontsize-res-744-value="12" data-field-inputfontsize-res-1200-value="12" data-field-inputheight-res-1200-value="35" data-field-inputmargbottom-res-1200-value="40" data-field-inputtitlemargbottom-res-1200-value="0" data-field-buttonshadowsize-res-1200-value="15" data-field-buttonshadowopacity-res-1200-value="5">
-							<div class="tn-atom tn-atom__form"></div>
-							<!--googleoff: all-->
-							<!--noindex-->
-							<div data-nosnippet="true" class="tn-atom__inputs-wrapp" style="display:none;">
-								<textarea class="tn-atom__inputs-textarea">[{"lid":"1701758924285","ls":"10","loff":"","li_type":"nm","li_ph":"What is your name?","li_req":"y","li_nm":"Name"},{"lid":"1701758924286","ls":"20","loff":"","li_type":"ph","li_ph":"Your phone number","li_req":"y","li_maskcountry":"RU","li_nm":"Phone"},{"lid":"1701759456178","ls":"30","loff":"","li_type":"in","li_ph":"Post your comments here","li_nm":"Input"}]</textarea>
-							</div>
-							<!--/noindex-->
-							<!--googleon: all-->
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7469353421701759711413" data-elem-id="1701759711413" data-elem-type="shape" data-field-top-value="40" data-field-left-value="1298" data-field-height-value="27" data-field-width-value="27" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value="px" data-field-widthunits-value="px" data-field-lazyoff-value="y" data-field-top-res-340-value="20" data-field-left-res-340-value="288" data-field-top-res-744-value="30" data-field-left-res-744-value="565" data-field-top-res-1200-value="40" data-field-left-res-1200-value="938">
-							<a class="tn-atom" href="#closepopup" style="background-image:url('https://static.tildacdn.com/tild3833-6666-4362-b035-633535643637/photo.svg');"></a>
-						</div>
-					</div>
-				</div>
-				<script>t_onReady(function () {
-t_onFuncLoad('t396_init', function () {
-t396_init('746935342');
-});
-});</script>
-				<!-- /T396 -->
-			</div>
-			<div id="rec746935415" class="r t-rec" style=" " data-animationappear="off" data-record-type="1093">
-				<!-- t1093 -->
-				<div class="t1093">
-					<div class="t-popup " data-anim="fadein" data-anim-timeout="0.3" data-tooltip-hook="#allin" data-popup-rec-ids="746935432" role="dialog" aria-modal="true" tabindex="-1">
-						<div class="t-popup__container t-width t-valign_middle"></div>
-					</div>
-					<div class="t-popup__bg"></div>
-				</div>
-				<style>#rec746935432[data-record-type="396"] {
-display: none;
-}
-.t1093 .t-popup #rec746935432[data-record-type="396"] {
-display: block;
-}</style>
-				<style>#rec746935415 .t1093 .t-popup__bg {
-background-color: rgba(54,54,54,0.80); -webkit-backdrop-filter: blur(4px);
-backdrop-filter: blur(4px);
-}</style>
-				<style>#rec746935415 .t1093 .t-popup.t-popup-anim-fadein .t-popup__container {
-transition-timing-function: ease-in-out;
-}</style>
-				<script>t_onReady(function () {
-t_onFuncLoad('t1093__init', function () {
-t1093__init('746935415');
-});
-t_onFuncLoad('t1093__initPopup', function () {
-t1093__initPopup('746935415');
-});
-});</script>
-			</div>
-			<div id="rec746935432" class="r t-rec" style=" " data-animationappear="off" data-record-type="396">
-				<style></style>
-				<div class="t396">
-					<div class="t396__artboard" data-artboard-recid="746935432" data-artboard-screens="340,744,1200,1920" data-artboard-height="800" data-artboard-valign="center" data-artboard-upscale="grid" data-artboard-height-res-340="497" data-artboard-height-res-744="510" data-artboard-height-res-1200="800">
-						<div class="t396__carrier" data-artboard-recid="746935432"></div>
-						<div class="t396__filter" data-artboard-recid="746935432"></div>
-						<div class="t396__elem tn-elem tn-elem__7469354321701698158284" data-elem-id="1701698158284" data-elem-type="shape" data-field-top-value="0" data-field-left-value="555" data-field-height-value="800" data-field-width-value="810" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value="px" data-field-widthunits-value="px" data-field-lazyoff-value="y" data-field-top-res-340-value="0" data-field-left-res-340-value="5" data-field-height-res-340-value="497" data-field-width-res-340-value="330" data-field-top-res-744-value="0" data-field-left-res-744-value="122" data-field-height-res-744-value="510" data-field-width-res-744-value="500" data-field-top-res-1200-value="0" data-field-left-res-1200-value="195" data-field-height-res-1200-value="800" data-field-width-res-1200-value="810">
-							<div class="tn-atom"></div>
-						</div>
-						<div class="t396__elem tn-elem footerlink tn-elem__7469354321701698961042" data-elem-id="1701698961042" data-elem-type="text" data-field-top-value="178" data-field-left-value="734" data-field-width-value="453" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="112" data-field-left-res-340-value="49" data-field-width-res-340-value="243" data-field-top-res-744-value="122" data-field-left-res-744-value="222" data-field-width-res-744-value="301" data-field-top-res-1200-value="178" data-field-left-res-1200-value="378">
-							<div class="tn-atom">
-								<a href="/" style="color: inherit">We will contact you to choose a time that is convenient for you. Meet online for 20 minutes to answer basic questions.</a>
-							</div>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7469354321701698961047" data-elem-id="1701698961047" data-elem-type="text" data-field-top-value="665" data-field-left-value="852" data-field-width-value="216" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="437" data-field-left-res-340-value="78" data-field-top-res-744-value="435" data-field-left-res-744-value="280" data-field-width-res-744-value="185" data-field-top-res-1200-value="625" data-field-left-res-1200-value="492">
-							<div class="tn-atom">
-								<a href="/" style="color: inherit">By submitting data, you agree to the</a>
-								<a href="/policy" target="_blank" rel="noreferrer noopener" style="color: rgb(51, 102, 255); border-bottom: 1px solid rgb(51, 102, 255); box-shadow: none; text-decoration: none;">Data Processing Policy</a>
-							</div>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7469354321701699068772" data-elem-id="1701699068772" data-elem-type="text" data-field-top-value="90" data-field-left-value="746" data-field-width-value="429" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="60" data-field-left-res-340-value="58" data-field-width-res-340-value="224" data-field-top-res-744-value="60" data-field-left-res-744-value="220" data-field-width-res-744-value="305" data-field-top-res-1200-value="90" data-field-left-res-1200-value="393" data-field-width-res-1200-value="414">
-							<div class="tn-atom" field="tn_text_1701699068772">Submit a request for a free consultation</div>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7469354321701758924285" data-elem-id="1701758924285" data-elem-type="form" data-field-top-value="310" data-field-left-value="693" data-field-width-value="672" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="216" data-field-left-res-340-value="20" data-field-width-res-340-value="300" data-field-top-res-744-value="206" data-field-left-res-744-value="383" data-field-width-res-744-value="300" data-field-top-res-1200-value="141" data-field-left-res-1200-value="91" data-field-width-res-1200-value="416" data-field-inputpos-value="v" data-field-inputfontfamily-value="Manrope" data-field-fieldfontfamily-value="Manrope" data-field-inputfontsize-value="16" data-field-inputfontweight-value="400" data-field-inputcolor-value="#999999" data-field-inputbgcolor-value="#ffffff" data-field-inputbordercolor-value="#363636" data-field-inputbordersize-value="1" data-field-inputheight-value="45" data-field-inputmargbottom-value="40" data-field-inputmargright-value="20" data-field-inputtitlefontsize-value="16" data-field-inputtitlefontweight-value="400" data-field-inputtitlecolor-value="#999999" data-field-inputtitlemargbottom-value="0" data-field-inputelsfontweight-value="400" data-field-inputelsfontsize-value="20" data-field-inputsstyle-value="y" data-field-buttontitle-value="send request" data-field-buttoncolor-value="#3366ff" data-field-buttonbgcolor-value="#ffffff" data-field-buttonradius-value="12" data-field-buttonmargtop-value="87" data-field-buttonwidth-value="261" data-field-buttonheight-value="54" data-field-buttonshadowsize-value="15" data-field-buttonshadowopacity-value="5" data-field-buttonfontfamily-value="Manrope" data-field-buttonfontsize-value="16" data-field-buttonfontweight-value="600" data-field-formname-value="rider-form" data-field-formerrreq-value="Это поле необходимо заполнить!" data-field-formerremail-value="Проверьте правильность заполнения поля!" data-field-formerrphone-value="Проверьте правильность заполнения поля!" data-field-formerrname-value="Проверьте правильность заполнения поля!" data-field-receivers-value="0b1d0ce3a978910e0ec16987b7097069" data-field-inputheight-res-340-value="25" data-field-inputmargbottom-res-340-value="25" data-field-inputtitlemargbottom-res-340-value="0" data-field-inputelsfontsize-res-340-value="20" data-field-buttonmargtop-res-340-value="20" data-field-buttonwidth-res-340-value="300" data-field-inputheight-res-744-value="25" data-field-inputmargbottom-res-744-value="25" data-field-inputtitlefontsize-res-744-value="12" data-field-buttonmargtop-res-744-value="30" data-field-buttonwidth-res-744-value="300" data-field-buttonheight-res-744-value="44" data-field-buttonfontsize-res-744-value="12" data-field-inputfontsize-res-1200-value="12" data-field-inputheight-res-1200-value="30" data-field-inputmargbottom-res-1200-value="30" data-field-inputtitlefontsize-res-1200-value="12" data-field-inputelsfontsize-res-1200-value="12" data-field-buttonradius-res-1200-value="6" data-field-buttonmargtop-res-1200-value="44" data-field-buttonwidth-res-1200-value="200" data-field-buttonheight-res-1200-value="40" data-field-buttonshadowsize-res-1200-value="15" data-field-buttonshadowopacity-res-1200-value="5" data-field-buttonfontsize-res-1200-value="12">
-							<div class="tn-atom tn-atom__form"></div>
-							<!--googleoff: all-->
-							<!--noindex-->
-							<div data-nosnippet="true" class="tn-atom__inputs-wrapp" style="display:none;">
-								<textarea class="tn-atom__inputs-textarea">[{"lid":"1701758924285","ls":"10","loff":"","li_type":"nm","li_ph":"What is your name","li_req":"y","li_nm":"Name"},{"lid":"1701758924286","ls":"20","loff":"","li_type":"ph","li_ph":"Your phone or messener","li_req":"y","li_nm":"Phone"},{"lid":"1701759456178","ls":"30","loff":"","li_type":"in","li_ph":"Request","li_nm":"Input"}]</textarea>
-							</div>
-							<!--/noindex-->
-							<!--googleon: all-->
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7469354321701759711413" data-elem-id="1701759711413" data-elem-type="shape" data-field-top-value="40" data-field-left-value="1298" data-field-height-value="27" data-field-width-value="27" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value="px" data-field-widthunits-value="px" data-field-lazyoff-value="y" data-field-top-res-340-value="20" data-field-left-res-340-value="288" data-field-top-res-744-value="30" data-field-left-res-744-value="565" data-field-top-res-1200-value="40" data-field-left-res-1200-value="938">
-							<a class="tn-atom" href="#closepopup" style="background-image:url('https://ik.imagekit.io/dr5fryhth/Adobe%20Express%20-%20file.png?updatedAt=1760850034700');"></a>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7469354321701846530092" data-elem-id="1701846530092" data-elem-type="text" data-field-top-value="565" data-field-left-value="419" data-field-width-value="196" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="586" data-field-left-res-340-value="20" data-field-top-res-744-value="429" data-field-left-res-744-value="382" data-field-top-res-1200-value="345" data-field-left-res-1200-value="306" data-field-width-res-1200-value="186">
-							<div class="tn-atom">
-								<a href="#" style="color: inherit">By submitting data, you agree to the</a>
-								<a href="#">Data Processing Policy</a>
-							</div>
-						</div>
-					</div>
-				</div>
-				<script>t_onReady(function () {
-t_onFuncLoad('t396_init', function () {
-t396_init('746935432');
-});
-});</script>
-				<!-- /T396 -->
-			</div>
+			<!-- Tilda popup removed -->
+			<!-- Popup content removed -->
+			<!-- Popup removed -->
+			<!-- Popup content removed -->
+			<!-- Popup removed -->
+			<!-- Popup content removed -->
 			<div id="rec746934507" class="r t-rec" style=" " data-animationappear="off" data-record-type="131">
 				<!-- T123 -->
 				<div class="t123">
@@ -2024,89 +1916,8 @@ cursor.removeText();
 					</div>
 				</div>
 			</div>
-			<div id="rec747485866" class="r t-rec" style=" " data-animationappear="off" data-record-type="1093">
-				<!-- t1093 -->
-				<div class="t1093">
-					<div class="t-popup " data-anim="fadein" data-anim-timeout="0.3" data-tooltip-hook="#mobile" data-popup-rec-ids="747485455" role="dialog" aria-modal="true" tabindex="-1">
-						<div class="t-popup__container t-width t-valign_top"></div>
-					</div>
-					<div class="t-popup__bg"></div>
-				</div>
-				<style>#rec747485455[data-record-type="396"] {
-display: none;
-}
-.t1093 .t-popup #rec747485455[data-record-type="396"] {
-display: block;
-}</style>
-				<style>#rec747485866 .t1093 .t-popup__bg {
-background-color: rgba(54,54,54,0.80); -webkit-backdrop-filter: blur(4px);
-backdrop-filter: blur(4px);
-}</style>
-				<style>#rec747485866 .t1093 .t-popup.t-popup-anim-fadein .t-popup__container {
-transition-timing-function: ease-in-out;
-}</style>
-				<script>t_onReady(function () {
-t_onFuncLoad('t1093__init', function () {
-t1093__init('747485866');
-});
-t_onFuncLoad('t1093__initPopup', function () {
-t1093__initPopup('747485866');
-});
-});</script>
-			</div>
-			<div id="rec747485455" class="r t-rec" style=" " data-animationappear="off" data-record-type="396">
-				<!-- T396 -->
-				<style></style>
-				<div class="t396">
-					<div class="t396__artboard" data-artboard-recid="747485455" data-artboard-screens="340,744,1200,1920" data-artboard-height="50" data-artboard-valign="center" data-artboard-upscale="window" data-artboard-height-res-340="620" data-artboard-height_vh-res-340="100" data-artboard-upscale-res-340="window" data-artboard-height-res-744="683" data-artboard-height_vh-res-744="100" data-artboard-upscale-res-744="window" data-artboard-height-res-1200="100">
-						<div class="t396__carrier" data-artboard-recid="747485455"></div>
-						<div class="t396__filter" data-artboard-recid="747485455"></div>
-						<div class="t396__elem tn-elem tn-elem__7474854551701699068772" data-elem-id="1701699068772" data-elem-type="text" data-field-top-value="-14" data-field-left-value="-902" data-field-width-value="429" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="136" data-field-left-res-340-value="20" data-field-width-res-340-value="224" data-field-top-res-744-value="162" data-field-left-res-744-value="62" data-field-width-res-744-value="138" data-field-top-res-1200-value="-272" data-field-left-res-1200-value="-1526" data-field-width-res-1200-value="414">
-							<div class="tn-atom">
-								<a href="#digital" style="color: inherit">What we do</a>
-							</div>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7474854551701759711413" data-elem-id="1701759711413" data-elem-type="shape" data-field-top-value="-64" data-field-left-value="-350" data-field-height-value="27" data-field-width-value="27" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value="px" data-field-widthunits-value="px" data-field-lazyoff-value="y" data-field-top-res-340-value="32" data-field-left-res-340-value="293" data-field-top-res-744-value="50" data-field-left-res-744-value="655" data-field-top-res-1200-value="-322" data-field-left-res-1200-value="-981">
-							<a class="tn-atom" href="#closepopup" style="background-image:url('https://static.tildacdn.com/tild3833-6666-4362-b035-633535643637/photo.svg');"></a>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7474854551702043953905" data-elem-id="1702043953905" data-elem-type="shape" data-field-top-value="-380" data-field-left-value="47" data-field-height-value="34" data-field-width-value="34" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value="px" data-field-widthunits-value="px" data-field-lazyoff-value="y" data-field-top-res-340-value="32" data-field-left-res-340-value="20" data-field-top-res-744-value="36" data-field-left-res-744-value="62" data-field-height-res-744-value="54" data-field-width-res-744-value="54" data-field-top-res-1200-value="-700">
-							<a class="tn-atom" href="#rec742101389" style="background-image:url('https://ik.imagekit.io/dr5fryhth/og-logo.jpg?updatedAt=1760757994864');"></a>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7474854551702044053559" data-elem-id="1702044053559" data-elem-type="text" data-field-top-value="-14" data-field-left-value="-902" data-field-width-value="429" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="166" data-field-left-res-340-value="20" data-field-width-res-340-value="224" data-field-top-res-744-value="200" data-field-left-res-744-value="62" data-field-width-res-744-value="305" data-field-top-res-1200-value="-272" data-field-left-res-1200-value="-1526" data-field-width-res-1200-value="414">
-							<div class="tn-atom">
-								<a href="#work" style="color: inherit">Our Services</a>
-							</div>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7474854551702044067141" data-elem-id="1702044067141" data-elem-type="text" data-field-top-value="-14" data-field-left-value="-902" data-field-width-value="429" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="196" data-field-left-res-340-value="20" data-field-width-res-340-value="224" data-field-top-res-744-value="238" data-field-left-res-744-value="62" data-field-width-res-744-value="305" data-field-top-res-1200-value="-272" data-field-left-res-1200-value="-1526" data-field-width-res-1200-value="414">
-							<div class="tn-atom">
-								<a href="#experience" style="color: inherit">Our Mission</a>
-							</div>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7474854551702044076756" data-elem-id="1702044076756" data-elem-type="text" data-field-top-value="-14" data-field-left-value="-903" data-field-width-value="429" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="226" data-field-left-res-340-value="20" data-field-width-res-340-value="224" data-field-top-res-744-value="276" data-field-left-res-744-value="62" data-field-width-res-744-value="305" data-field-top-res-1200-value="-272" data-field-left-res-1200-value="-1526" data-field-width-res-1200-value="414">
-							<div class="tn-atom">
-								<a href="#cases" style="color: inherit">Testimonials</a>
-							</div>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7474854551702044085713" data-elem-id="1702044085713" data-elem-type="text" data-field-top-value="-14" data-field-left-value="-902" data-field-width-value="429" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value data-field-widthunits-value="px" data-field-top-res-340-value="256" data-field-left-res-340-value="20" data-field-width-res-340-value="224" data-field-top-res-744-value="314" data-field-left-res-744-value="62" data-field-width-res-744-value="305" data-field-top-res-1200-value="-272" data-field-left-res-1200-value="-1526" data-field-width-res-1200-value="414">
-							<div class="tn-atom">
-								<a href="#rec741913790" style="color: inherit">Join Us</a>
-							</div>
-						</div>
-						<div class="t396__elem tn-elem tn-elem__7474854551702044221355" data-elem-id="1702044221355" data-elem-type="button" data-field-top-value="52" data-field-left-value="-935" data-field-height-value="54" data-field-width-value="395" data-field-axisy-value="top" data-field-axisx-value="left" data-field-container-value="grid" data-field-topunits-value="px" data-field-leftunits-value="px" data-field-heightunits-value="px" data-field-widthunits-value="px" data-field-top-res-340-value="424" data-field-left-res-340-value="20" data-field-height-res-340-value="40" data-field-width-res-340-value="300" data-field-top-res-744-value="490" data-field-left-res-744-value="62" data-field-height-res-744-value="44" data-field-width-res-744-value="620" data-field-top-res-1200-value="309" data-field-left-res-1200-value="-1054" data-field-height-res-1200-value="40" data-field-width-res-1200-value="244">
-							<a class="tn-atom" href="#question">Contact Us</a>
-						</div>
-					</div>
-				</div>
-				<script>t_onFuncLoad('t396_initialScale', function () {
-t396_initialScale('747485455');
-});
-t_onReady(function () {
-t_onFuncLoad('t396_init', function () {
-t396_init('747485455');
-});
-});</script>
-				<!-- /T396 -->
-			</div>
+			<!-- Popup removed -->
+			<!-- Popup content removed -->
 			<div id="rec746934574" class="r t-rec" style=" " data-record-type="270">
 				<div class="t270"></div>
 				<script>t_onReady(function () {
